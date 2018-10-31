@@ -1,7 +1,7 @@
-package = "IP2Location"
+package = "ip2location"
 version = "8.0.3-1"
 source = {
-   url = "https://github.com/ip2location/ip2location-lua"
+   url = "git://github.com/ip2location/ip2location-lua.git"
 }
 description = {
    summary = "IP2Location Lua Package",
