@@ -15,6 +15,7 @@ ip2location = {
   ipv6indexbaseaddr = 0,
   ipv4columnsize = 0,
   ipv6columnsize = 0,
+  columnsize_without_ip = 0,
   country_position_offset = 0,
   region_position_offset = 0,
   city_position_offset = 0,
@@ -82,6 +83,13 @@ ip2locationrecord.__index = ip2locationrecord
 
 local max_ipv4_range = bn(4294967295)
 local max_ipv6_range= bn("340282366920938463463374607431768211455")
+local from_v4mapped = bn("281470681743360")
+local to_v4mapped = bn("281474976710655")
+local from_6to4 = bn("42545680458834377588178886921629466624")
+local to_6to4 = bn("42550872755692912415807417417958686719")
+local from_teredo = bn("42540488161975842760550356425300246528")
+local to_teredo = bn("42540488241204005274814694018844196863")
+local last_32bits = bn(4294967295)
 
 local country_position = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
 local region_position = {0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
@@ -103,7 +111,7 @@ local mobilebrand_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 local elevation_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19}
 local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20}
 
-local api_version = "8.0.3"
+local api_version = "8.2.0"
 
 local modes = {
   countryshort = 0x00001,
@@ -135,10 +143,10 @@ local missing_file = "Invalid database file."
 local not_supported = "This parameter is unavailable for selected data file. Please upgrade the data file."
 
 -- for debugging purposes
---local function printme(stuff)
---  local inspect = require('inspect')
---  print(inspect(stuff))
---end
+local function printme(stuff)
+ local inspect = require('inspect')
+ print(inspect(stuff))
+end
 
 -- read byte
 local function readuint8(pos, myfile)
@@ -157,10 +165,22 @@ local function readuint32(pos, myfile)
   local bytestr = myfile:read(4)
   local value = bn.ZERO
   if bytestr ~= nil then
-    bytestr = string.reverse(bytestr)
-    for x=1,4 do
-      value = (value << 8) + bn(bytestr:byte(x))
-    end
+    -- bytestr = string.reverse(bytestr)
+    -- for x=1,4 do
+      -- value = (value << 8) + bn(bytestr:byte(x))
+    -- end
+    value = bn(string.unpack("<I4", bytestr))
+  end
+  return value
+end
+
+-- read unsigned 32-bit integer
+local function readuint32row(pos, row)
+  local pos2 = pos + 1 -- due to index starting with 1
+  local bytestr = string.sub(row, pos2, pos2 + 3) -- strip 4 bytes
+  local value = bn.ZERO
+  if bytestr ~= nil then
+    value = bn(string.unpack("<I4", bytestr))
   end
   return value
 end
@@ -171,10 +191,11 @@ local function readuint128(pos, myfile)
   local bytestr = myfile:read(16)
   local value = bn.ZERO
   if bytestr ~= nil then
-    bytestr = string.reverse(bytestr)
-    for x=1,16 do
-      value = (value << 8) + bn(bytestr:byte(x))
-    end
+    -- bytestr = string.reverse(bytestr)
+    -- for x=1,16 do
+      -- value = (value << 8) + bn(bytestr:byte(x))
+    -- end
+    value = bn(string.unpack("<I8", bytestr)) + (bn(string.unpack("<I8", bytestr, 9)) << 64) -- cannot read 16 bytes at once so split into 2
   end
   return value
 end
@@ -200,6 +221,17 @@ end
 local function readfloat(pos, myfile)
   myfile:seek("set", pos - 1)
   local bytestr = myfile:read(4)
+  local value = 0.0
+  if bytestr ~= nil then
+    value = string.unpack("f", bytestr)
+  end
+  return value
+end
+
+-- read float
+local function readfloatrow(pos, row)
+  local pos2 = pos + 1 -- due to index starting with 1
+  local bytestr = string.sub(row, pos2, pos2 + 3) -- strip 4 bytes
   local value = 0.0
   if bytestr ~= nil then
     value = string.unpack("f", bytestr)
@@ -234,84 +266,104 @@ function ip2location:new(dbpath)
   x.ipv6indexbaseaddr = readuint32(26, x.f):asnumber()
   x.ipv4columnsize = x.databasecolumn * 4 -- 4 bytes each column
   x.ipv6columnsize = 16 + ((x.databasecolumn - 1) * 4) -- 4 bytes each column, except IPFrom column which is 16 bytes
+  x.columnsize_without_ip = (x.databasecolumn - 1) * 4 -- 4 bytes each column, minus the IPFrom column
 
   local dbt = x.databasetype
 
   -- since both IPv4 and IPv6 use 4 bytes for the below columns, can just do it once here
   if country_position[dbt] ~= 0 then
-    x.country_position_offset = (country_position[dbt] - 1) * 4
+    -- x.country_position_offset = (country_position[dbt] - 1) * 4
+    x.country_position_offset = (country_position[dbt] - 2) * 4
     x.country_enabled = true
   end
   if region_position[dbt] ~= 0 then
-    x.region_position_offset = (region_position[dbt] - 1) * 4
+    -- x.region_position_offset = (region_position[dbt] - 1) * 4
+    x.region_position_offset = (region_position[dbt] - 2) * 4
     x.region_enabled = true
   end
   if city_position[dbt] ~= 0 then
-    x.city_position_offset = (city_position[dbt] - 1) * 4
+    -- x.city_position_offset = (city_position[dbt] - 1) * 4
+    x.city_position_offset = (city_position[dbt] - 2) * 4
     x.city_enabled = true
   end
   if isp_position[dbt] ~= 0 then
-    x.isp_position_offset = (isp_position[dbt] - 1) * 4
+    -- x.isp_position_offset = (isp_position[dbt] - 1) * 4
+    x.isp_position_offset = (isp_position[dbt] - 2) * 4
     x.isp_enabled = true
   end
   if domain_position[dbt] ~= 0 then
-    x.domain_position_offset = (domain_position[dbt] - 1) * 4
+    -- x.domain_position_offset = (domain_position[dbt] - 1) * 4
+    x.domain_position_offset = (domain_position[dbt] - 2) * 4
     x.domain_enabled = true
   end
   if zipcode_position[dbt] ~= 0 then
-    x.zipcode_position_offset = (zipcode_position[dbt] - 1) * 4
+    -- x.zipcode_position_offset = (zipcode_position[dbt] - 1) * 4
+    x.zipcode_position_offset = (zipcode_position[dbt] - 2) * 4
     x.zipcode_enabled = true
   end
   if latitude_position[dbt] ~= 0 then
-    x.latitude_position_offset = (latitude_position[dbt] - 1) * 4
+    -- x.latitude_position_offset = (latitude_position[dbt] - 1) * 4
+    x.latitude_position_offset = (latitude_position[dbt] - 2) * 4
     x.latitude_enabled = true
   end
   if longitude_position[dbt] ~= 0 then
-    x.longitude_position_offset = (longitude_position[dbt] - 1) * 4
+    -- x.longitude_position_offset = (longitude_position[dbt] - 1) * 4
+    x.longitude_position_offset = (longitude_position[dbt] - 2) * 4
     x.longitude_enabled = true
   end
   if timezone_position[dbt] ~= 0 then
-    x.timezone_position_offset = (timezone_position[dbt] - 1) * 4
+    -- x.timezone_position_offset = (timezone_position[dbt] - 1) * 4
+    x.timezone_position_offset = (timezone_position[dbt] - 2) * 4
     x.timezone_enabled = true
   end
   if netspeed_position[dbt] ~= 0 then
-    x.netspeed_position_offset = (netspeed_position[dbt] - 1) * 4
+    -- x.netspeed_position_offset = (netspeed_position[dbt] - 1) * 4
+    x.netspeed_position_offset = (netspeed_position[dbt] - 2) * 4
     x.netspeed_enabled = true
   end
   if iddcode_position[dbt] ~= 0 then
-    x.iddcode_position_offset = (iddcode_position[dbt] - 1) * 4
+    -- x.iddcode_position_offset = (iddcode_position[dbt] - 1) * 4
+    x.iddcode_position_offset = (iddcode_position[dbt] - 2) * 4
     x.iddcode_enabled = true
   end
   if areacode_position[dbt] ~= 0 then
-    x.areacode_position_offset = (areacode_position[dbt] - 1) * 4
+    -- x.areacode_position_offset = (areacode_position[dbt] - 1) * 4
+    x.areacode_position_offset = (areacode_position[dbt] - 2) * 4
     x.areacode_enabled = true
   end
   if weatherstationcode_position[dbt] ~= 0 then
-    x.weatherstationcode_position_offset = (weatherstationcode_position[dbt] - 1) * 4
+    -- x.weatherstationcode_position_offset = (weatherstationcode_position[dbt] - 1) * 4
+    x.weatherstationcode_position_offset = (weatherstationcode_position[dbt] - 2) * 4
     x.weatherstationcode_enabled = true
   end
   if weatherstationname_position[dbt] ~= 0 then
-    x.weatherstationname_position_offset = (weatherstationname_position[dbt] - 1) * 4
+    -- x.weatherstationname_position_offset = (weatherstationname_position[dbt] - 1) * 4
+    x.weatherstationname_position_offset = (weatherstationname_position[dbt] - 2) * 4
     x.weatherstationname_enabled = true
   end
   if mcc_position[dbt] ~= 0 then
-    x.mcc_position_offset = (mcc_position[dbt] - 1) * 4
+    -- x.mcc_position_offset = (mcc_position[dbt] - 1) * 4
+    x.mcc_position_offset = (mcc_position[dbt] - 2) * 4
     x.mcc_enabled = true
   end
   if mnc_position[dbt] ~= 0 then
-    x.mnc_position_offset = (mnc_position[dbt] - 1) * 4
+    -- x.mnc_position_offset = (mnc_position[dbt] - 1) * 4
+    x.mnc_position_offset = (mnc_position[dbt] - 2) * 4
     x.mnc_enabled = true
   end
   if mobilebrand_position[dbt] ~= 0 then
-    x.mobilebrand_position_offset = (mobilebrand_position[dbt] - 1) * 4
+    -- x.mobilebrand_position_offset = (mobilebrand_position[dbt] - 1) * 4
+    x.mobilebrand_position_offset = (mobilebrand_position[dbt] - 2) * 4
     x.mobilebrand_enabled = true
   end
   if elevation_position[dbt] ~= 0 then
-    x.elevation_position_offset = (elevation_position[dbt] - 1) * 4
+    -- x.elevation_position_offset = (elevation_position[dbt] - 1) * 4
+    x.elevation_position_offset = (elevation_position[dbt] - 2) * 4
     x.elevation_enabled = true
   end
   if usagetype_position[dbt] ~= 0 then
-    x.usagetype_position_offset = (usagetype_position[dbt] - 1) * 4
+    -- x.usagetype_position_offset = (usagetype_position[dbt] - 1) * 4
+    x.usagetype_position_offset = (usagetype_position[dbt] - 2) * 4
     x.usagetype_enabled = true
   end
 
@@ -359,12 +411,35 @@ function ip2location:checkip(ip)
       if #v > 0 and part > 65535 then return R.ERROR end
       ipnum = ipnum + (bn(part) << (16 * (8 - x)))
     end
-
-    local ipindex = 0;
-    if self.ipv6indexbaseaddr > 0 then
-      ipindex = ((ipnum >> 112) << 3):asnumber() + self.ipv6indexbaseaddr
+    
+    local override = 0
+    
+    -- special cases which should convert to equivalent IPv4
+    if ipnum >= from_v4mapped and ipnum <= to_v4mapped then -- ipv4-mapped ipv6
+      override = 1
+      ipnum = ipnum - from_v4mapped
+    elseif ipnum >= from_6to4 and ipnum <= to_6to4 then  -- 6to4
+      override = 1
+      ipnum = ipnum >> 80
+      ipnum = ipnum & last_32bits
+    elseif ipnum >= from_teredo and ipnum <= to_teredo then -- Teredo
+      override = 1
+      ipnum = ~ipnum
+      ipnum = ipnum & last_32bits
     end
-    return R.IPV6, ipnum, ipindex
+    
+    local ipindex = 0;
+    if override == 1 then
+      if self.ipv4indexbaseaddr > 0 then
+        ipindex = ((ipnum >> 16) << 3):asnumber() + self.ipv4indexbaseaddr
+      end
+      return R.IPV4, ipnum, ipindex
+    else
+      if self.ipv6indexbaseaddr > 0 then
+        ipindex = ((ipnum >> 112) << 3):asnumber() + self.ipv6indexbaseaddr
+      end
+      return R.IPV6, ipnum, ipindex
+    end
   end
 
   return R.ERROR
@@ -438,6 +513,8 @@ function ip2location:query(ipaddress, mode)
   local ipfrom = bn.ZERO
   local ipto = bn.ZERO
   local maxip = bn.ZERO
+  local firstcol = 4
+  -- local row = ""
 
   -- printme(self)
 
@@ -478,87 +555,111 @@ function ip2location:query(ipaddress, mode)
 
     if (ipno >= ipfrom) and (ipno < ipto) then
       if iptype == 6 then
-        rowoffset = rowoffset + 12 -- coz below is assuming all columns are 4 bytes, so got 12 left to go to make 16 bytes total
+        firstcol = 16
+        -- rowoffset = rowoffset + 12 -- coz below is assuming all columns are 4 bytes, so got 12 left to go to make 16 bytes total
       end
 
+      self.f:seek("set", rowoffset + firstcol - 1)
+      local row = self.f:read(self.columnsize_without_ip)
+
       if (mode&modes.countryshort == 1) and (self.country_enabled == true) then
-        result.country_short = readstr(readuint32(rowoffset + self.country_position_offset, self.f):asnumber(), self.f)
+        -- result.country_short = readstr(readuint32(rowoffset + self.country_position_offset, self.f):asnumber(), self.f)
+        result.country_short = readstr(readuint32row(self.country_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.countrylong ~= 0) and (self.country_enabled == true) then
-        result.country_long = readstr(readuint32(rowoffset + self.country_position_offset, self.f):asnumber() + 3, self.f)
+        -- result.country_long = readstr(readuint32(rowoffset + self.country_position_offset, self.f):asnumber() + 3, self.f)
+        result.country_long = readstr(readuint32row(self.country_position_offset, row):asnumber() + 3, self.f)
       end
 
       if (mode&modes.region ~= 0) and (self.region_enabled == true) then
-        result.region = readstr(readuint32(rowoffset + self.region_position_offset, self.f):asnumber(), self.f)
+        -- result.region = readstr(readuint32(rowoffset + self.region_position_offset, self.f):asnumber(), self.f)
+        result.region = readstr(readuint32row(self.region_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.city ~= 0) and (self.city_enabled == true) then
-        result.city = readstr(readuint32(rowoffset + self.city_position_offset, self.f):asnumber(), self.f)
+        -- result.city = readstr(readuint32(rowoffset + self.city_position_offset, self.f):asnumber(), self.f)
+        result.city = readstr(readuint32row(self.city_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.isp ~= 0) and (self.isp_enabled == true) then
-        result.isp = readstr(readuint32(rowoffset + self.isp_position_offset, self.f):asnumber(), self.f)
+        -- result.isp = readstr(readuint32(rowoffset + self.isp_position_offset, self.f):asnumber(), self.f)
+        result.isp = readstr(readuint32row(self.isp_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.latitude ~= 0) and (self.latitude_enabled == true) then
-        result.latitude = roundup(readfloat(rowoffset + self.latitude_position_offset, self.f), 6)
+        -- result.latitude = roundup(readfloat(rowoffset + self.latitude_position_offset, self.f), 6)
+        result.latitude = roundup(readfloatrow(self.latitude_position_offset, row), 6)
       end
 
       if (mode&modes.longitude ~= 0) and (self.longitude_enabled == true) then
-        result.longitude = roundup(readfloat(rowoffset + self.longitude_position_offset, self.f), 6)
+        -- result.longitude = roundup(readfloat(rowoffset + self.longitude_position_offset, self.f), 6)
+        result.longitude = roundup(readfloatrow(self.longitude_position_offset, row), 6)
       end
 
       if (mode&modes.domain ~= 0) and (self.domain_enabled == true) then
-        result.domain = readstr(readuint32(rowoffset + self.domain_position_offset, self.f):asnumber(), self.f)
+        -- result.domain = readstr(readuint32(rowoffset + self.domain_position_offset, self.f):asnumber(), self.f)
+        result.domain = readstr(readuint32row(self.domain_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.zipcode ~= 0) and (self.zipcode_enabled == true) then
-        result.zipcode = readstr(readuint32(rowoffset + self.zipcode_position_offset, self.f):asnumber(), self.f)
+        -- result.zipcode = readstr(readuint32(rowoffset + self.zipcode_position_offset, self.f):asnumber(), self.f)
+        result.zipcode = readstr(readuint32row(self.zipcode_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.timezone ~= 0) and (self.timezone_enabled == true) then
-        result.timezone = readstr(readuint32(rowoffset + self.timezone_position_offset, self.f):asnumber(), self.f)
+        -- result.timezone = readstr(readuint32(rowoffset + self.timezone_position_offset, self.f):asnumber(), self.f)
+        result.timezone = readstr(readuint32row(self.timezone_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.netspeed ~= 0) and (self.netspeed_enabled == true) then
-        result.netspeed = readstr(readuint32(rowoffset + self.netspeed_position_offset, self.f):asnumber(), self.f)
+        -- result.netspeed = readstr(readuint32(rowoffset + self.netspeed_position_offset, self.f):asnumber(), self.f)
+        result.netspeed = readstr(readuint32row(self.netspeed_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.iddcode ~= 0) and (self.iddcode_enabled == true) then
-        result.iddcode = readstr(readuint32(rowoffset + self.iddcode_position_offset, self.f):asnumber(), self.f)
+        -- result.iddcode = readstr(readuint32(rowoffset + self.iddcode_position_offset, self.f):asnumber(), self.f)
+        result.iddcode = readstr(readuint32row(self.iddcode_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.areacode ~= 0) and (self.areacode_enabled == true) then
-        result.areacode = readstr(readuint32(rowoffset + self.areacode_position_offset, self.f):asnumber(), self.f)
+        -- result.areacode = readstr(readuint32(rowoffset + self.areacode_position_offset, self.f):asnumber(), self.f)
+        result.areacode = readstr(readuint32row(self.areacode_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.weatherstationcode ~= 0) and (self.weatherstationcode_enabled == true) then
-        result.weatherstationcode = readstr(readuint32(rowoffset + self.weatherstationcode_position_offset, self.f):asnumber(), self.f)
+        -- result.weatherstationcode = readstr(readuint32(rowoffset + self.weatherstationcode_position_offset, self.f):asnumber(), self.f)
+        result.weatherstationcode = readstr(readuint32row(self.weatherstationcode_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.weatherstationname ~= 0) and (self.weatherstationname_enabled == true) then
-        result.weatherstationname = readstr(readuint32(rowoffset + self.weatherstationname_position_offset, self.f):asnumber(), self.f)
+        -- result.weatherstationname = readstr(readuint32(rowoffset + self.weatherstationname_position_offset, self.f):asnumber(), self.f)
+        result.weatherstationname = readstr(readuint32row(self.weatherstationname_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.mcc ~= 0) and (self.mcc_enabled == true) then
-        result.mcc = readstr(readuint32(rowoffset + self.mcc_position_offset, self.f):asnumber(), self.f)
+        -- result.mcc = readstr(readuint32(rowoffset + self.mcc_position_offset, self.f):asnumber(), self.f)
+        result.mcc = readstr(readuint32row(self.mcc_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.mnc ~= 0) and (self.mnc_enabled == true) then
-        result.mnc = readstr(readuint32(rowoffset + self.mnc_position_offset, self.f):asnumber(), self.f)
+        -- result.mnc = readstr(readuint32(rowoffset + self.mnc_position_offset, self.f):asnumber(), self.f)
+        result.mnc = readstr(readuint32row(self.mnc_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.mobilebrand ~= 0) and (self.mobilebrand_enabled == true) then
-        result.mobilebrand = readstr(readuint32(rowoffset + self.mobilebrand_position_offset, self.f):asnumber(), self.f)
+        -- result.mobilebrand = readstr(readuint32(rowoffset + self.mobilebrand_position_offset, self.f):asnumber(), self.f)
+        result.mobilebrand = readstr(readuint32row(self.mobilebrand_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.elevation ~= 0) and (self.elevation_enabled == true) then
-        result.elevation = tonumber(readstr(readuint32(rowoffset + self.elevation_position_offset, self.f):asnumber(), self.f))
+        -- result.elevation = tonumber(readstr(readuint32(rowoffset + self.elevation_position_offset, self.f):asnumber(), self.f))
+        result.elevation = tonumber(readstr(readuint32row(self.elevation_position_offset, row):asnumber(), self.f))
       end
 
       if (mode&modes.usagetype ~= 0) and (self.usagetype_enabled == true) then
-        result.usagetype = readstr(readuint32(rowoffset + self.usagetype_position_offset, self.f):asnumber(), self.f)
+        -- result.usagetype = readstr(readuint32(rowoffset + self.usagetype_position_offset, self.f):asnumber(), self.f)
+        result.usagetype = readstr(readuint32row(self.usagetype_position_offset, row):asnumber(), self.f)
       end
 
       -- printme(result)

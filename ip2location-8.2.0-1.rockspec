@@ -1,5 +1,5 @@
 package = "ip2location"
-version = "8.0.3-1"
+version = "8.2.0-1"
 source = {
    url = "git://github.com/ip2location/ip2location-lua.git"
 }
@@ -14,7 +14,7 @@ description = {
       time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name,
       mcc, mnc, mobile brand, elevation, and usage type as values. It supports both IP address in IPv4 and IPv6.
    ]],
-   homepage = "https://www.ip2location.com/developers/lua",
+   homepage = "https://www.ip2location.com/development-libraries/ip2location/lua",
    license = "MIT",
    maintainer = "support@ip2location.com"
 }
