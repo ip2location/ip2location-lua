@@ -55,6 +55,9 @@ print("mnc: " .. result.mnc)
 print("mobilebrand: " .. result.mobilebrand)
 print("elevation: " .. result.elevation)
 print("usagetype: " .. result.usagetype)
+
+ip2loc:close()
+
 ```
 
 Dependencies
@@ -73,4 +76,4 @@ Use the IPv6 BIN file if you need to query BOTH IPv4 and IPv6 addresses.
 Copyright
 =========
 
-Copyright (C) 2019 by IP2Location.com, support@ip2location.com
+Copyright (C) 2020 by IP2Location.com, support@ip2location.com
