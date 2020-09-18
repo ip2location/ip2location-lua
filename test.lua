@@ -24,3 +24,5 @@ print("mnc: " .. result.mnc)
 print("mobilebrand: " .. result.mobilebrand)
 print("elevation: " .. result.elevation)
 print("usagetype: " .. result.usagetype)
+
+ip2loc:close()

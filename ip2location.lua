@@ -111,7 +111,7 @@ local mobilebrand_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 local elevation_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19}
 local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20}
 
-local api_version = "8.2.0"
+local api_version = "8.3.0"
 
 local modes = {
   countryshort = 0x00001,
@@ -144,8 +144,8 @@ local not_supported = "This parameter is unavailable for selected data file. Ple
 
 -- for debugging purposes
 local function printme(stuff)
- local inspect = require('inspect')
- print(inspect(stuff))
+  local inspect = require('inspect')
+  print(inspect(stuff))
 end
 
 -- read byte
@@ -370,6 +370,12 @@ function ip2location:new(dbpath)
   x.metaok = true
   -- printme(x)
   return x
+end
+
+-- close file and reset
+function ip2location:close()
+  self.metaok = false
+  io.close(self.f)
 end
 
 -- get IP type and calculate IP number; calculates index too if exists
