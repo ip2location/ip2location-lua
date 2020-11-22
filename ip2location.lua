@@ -404,10 +404,34 @@ function ip2location:checkip(ip)
   -- check for ipv6 format, should be 8 'chunks' of numbers/letters
   -- without leading/trailing chars
   -- or fewer than 8 chunks, but with only one `::` group
-  chunks = {ip:match("^"..(("([a-fA-F0-9]*):"):rep(8):gsub(":$","$")))}
+  -- chunks = {ip:match("^"..(("([a-fA-F0-9]*):"):rep(8):gsub(":$","$")))}
   --  if #chunks == 8
   --  or #chunks < 8 and ip:match('::') and not ip:gsub("::","",1):match('::') then
 
+  local isIPv6 = false;
+  local hextets = 8;
+
+  if #chunks == 0 then
+    -- parse the ipv6 string using the expected pattern
+    for hextet in ip:gmatch("[a-fA-F0-9]*") do
+      table.insert(chunks, hextet)
+    end
+    if #chunks > 0 then isIPv6 = true; end
+  end
+
+  -- expand the ipv6 address and add zeroes
+  if isIPv6 == true then
+    for i = 1, #chunks do
+      if chunks[i] == "" then
+        for j = 1 , hextets - (#chunks - 1) - 1 do
+          if j == 1 then chunks[i] = "0" end
+          table.insert(chunks, i, "0")
+        end
+      end
+    end
+    if chunks[hextets] == "" then chunks[hextets] = "0" end
+  end
+  
   -- only support full IPv6 format for now
   if #chunks == 8 then
     local ipnum = bn.ZERO
