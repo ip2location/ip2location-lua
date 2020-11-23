@@ -401,6 +401,24 @@ function ip2location:checkip(ip)
     return R.IPV4, ipnum, ipindex
   end
 
+  -- check for format ::FFFF:1.11.111.111 for ipv4
+  local chunks = {ip:match("^%:%:[fF][fF][fF][fF]%:(%d+)%.(%d+)%.(%d+)%.(%d+)$")}
+  if #chunks == 4 then
+    local ipnum = bn.ZERO
+    local octet = 0
+    for x,v in pairs(chunks) do
+      octet = tonumber(v)
+      if octet > 255 then return R.ERROR end
+      ipnum = ipnum + (bn(octet) << (8 * (4 - x)))
+    end
+
+    local ipindex = 0;
+    if self.ipv4indexbaseaddr > 0 then
+      ipindex = ((ipnum >> 16) << 3):asnumber() + self.ipv4indexbaseaddr
+    end
+    return R.IPV4, ipnum, ipindex
+  end
+
   -- check for ipv6 format, should be 8 'chunks' of numbers/letters
   -- without leading/trailing chars
   -- or fewer than 8 chunks, but with only one `::` group
