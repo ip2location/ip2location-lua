@@ -89,7 +89,6 @@ local from_6to4 = bn("42545680458834377588178886921629466624")
 local to_6to4 = bn("42550872755692912415807417417958686719")
 local from_teredo = bn("42540488161975842760550356425300246528")
 local to_teredo = bn("42540488241204005274814694018844196863")
-local last_32bits = bn(4294967295)
 
 local country_position = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
 local region_position = {0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
@@ -111,7 +110,7 @@ local mobilebrand_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 local elevation_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19}
 local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20}
 
-local api_version = "8.3.0"
+local api_version = "8.3.1"
 
 local modes = {
   countryshort = 0x00001,
@@ -449,6 +448,12 @@ function ip2location:checkip(ip)
     end
     if chunks[hextets] == "" then chunks[hextets] = "0" end
   end
+
+  -- DEBUGGING CODE
+  -- for key, value in pairs(chunks)
+  -- do
+      -- print(key, " -- " , value);
+  -- end
   
   -- only support full IPv6 format for now
   if #chunks == 8 then
@@ -462,19 +467,31 @@ function ip2location:checkip(ip)
     
     local override = 0
     
+    -- DEBUGGING
+    -- print("IPNUM BEFORE: " .. ipnum)
+    
     -- special cases which should convert to equivalent IPv4
     if ipnum >= from_v4mapped and ipnum <= to_v4mapped then -- ipv4-mapped ipv6
+      -- print("IPv4-mapped") -- DEBUGGING
       override = 1
       ipnum = ipnum - from_v4mapped
     elseif ipnum >= from_6to4 and ipnum <= to_6to4 then  -- 6to4
+      -- print("6to4") -- DEBUGGING
       override = 1
       ipnum = ipnum >> 80
-      ipnum = ipnum & last_32bits
+      ipnum2 = ipnum:asnumber() & 0xffffffff
+      ipnum = bn(ipnum2) -- convert back to bn
     elseif ipnum >= from_teredo and ipnum <= to_teredo then -- Teredo
+      -- print("Teredo") -- DEBUGGING
       override = 1
       ipnum = ~ipnum
-      ipnum = ipnum & last_32bits
+      ipnum2 = ipnum:asnumber() & 0xffffffff
+      -- print("ipnum2: " .. ipnum2) -- DEBUGGING
+      ipnum = bn(ipnum2) -- convert back to bn
     end
+    
+    -- DEBUGGING
+    -- print("IPNUM AFTER: " .. ipnum)
     
     local ipindex = 0;
     if override == 1 then

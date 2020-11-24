@@ -1,5 +1,5 @@
 package = "ip2location"
-version = "8.3.0-1"
+version = "8.3.1-1"
 source = {
    url = "git://github.com/ip2location/ip2location-lua.git"
 }
