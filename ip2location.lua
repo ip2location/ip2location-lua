@@ -15,6 +15,9 @@ ip2location = {
   ipv6indexbaseaddr = 0,
   ipv4columnsize = 0,
   ipv6columnsize = 0,
+  productcode = 0,
+  producttype = 0,
+  filesize = 0,
   columnsize_without_ip = 0,
   country_position_offset = 0,
   region_position_offset = 0,
@@ -35,6 +38,8 @@ ip2location = {
   mobilebrand_position_offset = 0,
   elevation_position_offset = 0,
   usagetype_position_offset = 0,
+  addresstype_position_offset = 0,
+  category_position_offset = 0,
   country_enabled = false,
   region_enabled = false,
   city_enabled = false,
@@ -53,7 +58,9 @@ ip2location = {
   mnc_enabled = false,
   mobilebrand_enabled = false,
   elevation_enabled = false,
-  usagetype_enabled = false
+  usagetype_enabled = false,
+  addresstype_enabled = false,
+  category_enabled = false
 }
 ip2location.__index = ip2location
 
@@ -77,7 +84,9 @@ ip2locationrecord = {
   mnc = '',
   mobilebrand = '',
   elevation = 0,
-  usagetype = ''
+  usagetype = '',
+  addresstype = '',
+  category = ''
 }
 ip2locationrecord.__index = ip2locationrecord
 
@@ -90,56 +99,61 @@ local to_6to4 = bn("42550872755692912415807417417958686719")
 local from_teredo = bn("42540488161975842760550356425300246528")
 local to_teredo = bn("42540488241204005274814694018844196863")
 
-local country_position = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
-local region_position = {0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
-local city_position = {0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
-local isp_position = {0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9, 0, 9, 0, 9, 0, 9, 7, 9, 0, 9, 7, 9}
-local latitude_position = {0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}
-local longitude_position = {0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
-local domain_position = {0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10,0, 10, 0, 10, 0, 10, 8, 10, 0, 10, 8, 10}
-local zipcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 7, 7, 7, 0, 7, 0, 7, 7, 7, 0, 7}
-local timezone_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 7, 8, 8, 8, 7, 8, 0, 8, 8, 8, 0, 8}
-local netspeed_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 11,0, 11,8, 11, 0, 11, 0, 11, 0, 11}
-local iddcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 12, 0, 12, 0, 12, 9, 12, 0, 12}
-local areacode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10 ,13 ,0, 13, 0, 13, 10, 13, 0, 13}
-local weatherstationcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 14, 0, 14, 0, 14, 0, 14}
-local weatherstationname_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 15, 0, 15, 0, 15, 0, 15}
-local mcc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 16, 0, 16, 9, 16}
-local mnc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10,17, 0, 17, 10, 17}
-local mobilebrand_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,18, 0, 18, 11, 18}
-local elevation_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19}
-local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20}
+local country_position = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
+local region_position = {0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
+local city_position = {0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
+local isp_position = {0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9, 0, 9, 0, 9, 0, 9, 7, 9, 0, 9, 7, 9, 9}
+local latitude_position = {0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}
+local longitude_position = {0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
+local domain_position = {0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10,0, 10, 0, 10, 0, 10, 8, 10, 0, 10, 8, 10, 10}
+local zipcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 7, 7, 7, 0, 7, 0, 7, 7, 7, 0, 7, 7}
+local timezone_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 7, 8, 8, 8, 7, 8, 0, 8, 8, 8, 0, 8, 8}
+local netspeed_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 11,0, 11,8, 11, 0, 11, 0, 11, 0, 11, 11}
+local iddcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 12, 0, 12, 0, 12, 9, 12, 0, 12, 12}
+local areacode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10 ,13 ,0, 13, 0, 13, 10, 13, 0, 13, 13}
+local weatherstationcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 14, 0, 14, 0, 14, 0, 14, 14}
+local weatherstationname_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 15, 0, 15, 0, 15, 0, 15, 15}
+local mcc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 16, 0, 16, 9, 16, 16}
+local mnc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10,17, 0, 17, 10, 17, 17}
+local mobilebrand_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,18, 0, 18, 11, 18, 18}
+local elevation_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19, 19}
+local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20, 20}
+local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21}
+local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22}
 
-local api_version = "8.3.1"
+local api_version = "8.4.0"
 
 local modes = {
-  countryshort = 0x00001,
-  countrylong = 0x00002,
-  region = 0x00004,
-  city = 0x00008,
-  isp = 0x00010,
-  latitude = 0x00020,
-  longitude = 0x00040,
-  domain = 0x00080,
-  zipcode = 0x00100,
-  timezone = 0x00200,
-  netspeed = 0x00400,
-  iddcode = 0x00800,
-  areacode = 0x01000,
-  weatherstationcode = 0x02000,
-  weatherstationname = 0x04000,
-  mcc = 0x08000,
-  mnc = 0x10000,
-  mobilebrand = 0x20000,
-  elevation = 0x40000,
-  usagetype = 0x80000
+  countryshort = 0x000001,
+  countrylong = 0x000002,
+  region = 0x000004,
+  city = 0x000008,
+  isp = 0x000010,
+  latitude = 0x000020,
+  longitude = 0x000040,
+  domain = 0x000080,
+  zipcode = 0x000100,
+  timezone = 0x000200,
+  netspeed = 0x000400,
+  iddcode = 0x000800,
+  areacode = 0x001000,
+  weatherstationcode = 0x002000,
+  weatherstationname = 0x004000,
+  mcc = 0x008000,
+  mnc = 0x010000,
+  mobilebrand = 0x020000,
+  elevation = 0x040000,
+  usagetype = 0x080000,
+  addresstype = 0x100000,
+  category = 0x200000
 }
 
-modes.all = modes.countryshort | modes.countrylong | modes.region | modes.city | modes.isp | modes.latitude | modes.longitude | modes.domain | modes.zipcode | modes.timezone | modes.netspeed | modes.iddcode | modes.areacode | modes.weatherstationcode | modes.weatherstationname | modes.mcc | modes.mnc | modes.mobilebrand | modes.elevation | modes.usagetype
+modes.all = modes.countryshort | modes.countrylong | modes.region | modes.city | modes.isp | modes.latitude | modes.longitude | modes.domain | modes.zipcode | modes.timezone | modes.netspeed | modes.iddcode | modes.areacode | modes.weatherstationcode | modes.weatherstationname | modes.mcc | modes.mnc | modes.mobilebrand | modes.elevation | modes.usagetype | modes.addresstype | modes.category
 
 local invalid_address = "Invalid IP address."
 local missing_file = "Invalid database file."
 local not_supported = "This parameter is unavailable for selected data file. Please upgrade the data file."
+local invalid_bin = "Incorrect IP2Location BIN file format. Please make sure that you are using the latest IP2Location BIN file."
 
 -- for debugging purposes
 local function printme(stuff)
@@ -164,10 +178,6 @@ local function readuint32(pos, myfile)
   local bytestr = myfile:read(4)
   local value = bn.ZERO
   if bytestr ~= nil then
-    -- bytestr = string.reverse(bytestr)
-    -- for x=1,4 do
-      -- value = (value << 8) + bn(bytestr:byte(x))
-    -- end
     value = bn(string.unpack("<I4", bytestr))
   end
   return value
@@ -190,10 +200,6 @@ local function readuint128(pos, myfile)
   local bytestr = myfile:read(16)
   local value = bn.ZERO
   if bytestr ~= nil then
-    -- bytestr = string.reverse(bytestr)
-    -- for x=1,16 do
-      -- value = (value << 8) + bn(bytestr:byte(x))
-    -- end
     value = bn(string.unpack("<I8", bytestr)) + (bn(string.unpack("<I8", bytestr, 9)) << 64) -- cannot read 16 bytes at once so split into 2
   end
   return value
@@ -212,17 +218,6 @@ local function readstr(pos, myfile)
   local value = ''
   if bytestr ~= nil then
     value = bytestr
-  end
-  return value
-end
-
--- read float
-local function readfloat(pos, myfile)
-  myfile:seek("set", pos - 1)
-  local bytestr = myfile:read(4)
-  local value = 0.0
-  if bytestr ~= nil then
-    value = string.unpack("f", bytestr)
   end
   return value
 end
@@ -263,6 +258,15 @@ function ip2location:new(dbpath)
   x.ipv6databaseaddr = readuint32(18, x.f):asnumber()
   x.ipv4indexbaseaddr = readuint32(22, x.f):asnumber()
   x.ipv6indexbaseaddr = readuint32(26, x.f):asnumber()
+  x.productcode = readuint8(30, x.f)
+  x.producttype = readuint8(31, x.f)
+  x.filesize = readuint32(32, x.f):asnumber()
+  
+		-- check if is correct BIN (should be 1 for IP2Location BIN file), also checking for zipped file (PK being the first 2 chars)
+		if (x.productcode ~= 1 and x.databaseyear >= 21) or (x.databasetype == 80 and x.databasecolumn == 75) then -- only BINs from Jan 2021 onwards have this byte set
+      error(invalid_bin)
+		end
+
   x.ipv4columnsize = x.databasecolumn * 4 -- 4 bytes each column
   x.ipv6columnsize = 16 + ((x.databasecolumn - 1) * 4) -- 4 bytes each column, except IPFrom column which is 16 bytes
   x.columnsize_without_ip = (x.databasecolumn - 1) * 4 -- 4 bytes each column, minus the IPFrom column
@@ -271,99 +275,88 @@ function ip2location:new(dbpath)
 
   -- since both IPv4 and IPv6 use 4 bytes for the below columns, can just do it once here
   if country_position[dbt] ~= 0 then
-    -- x.country_position_offset = (country_position[dbt] - 1) * 4
     x.country_position_offset = (country_position[dbt] - 2) * 4
     x.country_enabled = true
   end
   if region_position[dbt] ~= 0 then
-    -- x.region_position_offset = (region_position[dbt] - 1) * 4
     x.region_position_offset = (region_position[dbt] - 2) * 4
     x.region_enabled = true
   end
   if city_position[dbt] ~= 0 then
-    -- x.city_position_offset = (city_position[dbt] - 1) * 4
     x.city_position_offset = (city_position[dbt] - 2) * 4
     x.city_enabled = true
   end
   if isp_position[dbt] ~= 0 then
-    -- x.isp_position_offset = (isp_position[dbt] - 1) * 4
     x.isp_position_offset = (isp_position[dbt] - 2) * 4
     x.isp_enabled = true
   end
   if domain_position[dbt] ~= 0 then
-    -- x.domain_position_offset = (domain_position[dbt] - 1) * 4
     x.domain_position_offset = (domain_position[dbt] - 2) * 4
     x.domain_enabled = true
   end
   if zipcode_position[dbt] ~= 0 then
-    -- x.zipcode_position_offset = (zipcode_position[dbt] - 1) * 4
     x.zipcode_position_offset = (zipcode_position[dbt] - 2) * 4
     x.zipcode_enabled = true
   end
   if latitude_position[dbt] ~= 0 then
-    -- x.latitude_position_offset = (latitude_position[dbt] - 1) * 4
     x.latitude_position_offset = (latitude_position[dbt] - 2) * 4
     x.latitude_enabled = true
   end
   if longitude_position[dbt] ~= 0 then
-    -- x.longitude_position_offset = (longitude_position[dbt] - 1) * 4
     x.longitude_position_offset = (longitude_position[dbt] - 2) * 4
     x.longitude_enabled = true
   end
   if timezone_position[dbt] ~= 0 then
-    -- x.timezone_position_offset = (timezone_position[dbt] - 1) * 4
     x.timezone_position_offset = (timezone_position[dbt] - 2) * 4
     x.timezone_enabled = true
   end
   if netspeed_position[dbt] ~= 0 then
-    -- x.netspeed_position_offset = (netspeed_position[dbt] - 1) * 4
     x.netspeed_position_offset = (netspeed_position[dbt] - 2) * 4
     x.netspeed_enabled = true
   end
   if iddcode_position[dbt] ~= 0 then
-    -- x.iddcode_position_offset = (iddcode_position[dbt] - 1) * 4
     x.iddcode_position_offset = (iddcode_position[dbt] - 2) * 4
     x.iddcode_enabled = true
   end
   if areacode_position[dbt] ~= 0 then
-    -- x.areacode_position_offset = (areacode_position[dbt] - 1) * 4
     x.areacode_position_offset = (areacode_position[dbt] - 2) * 4
     x.areacode_enabled = true
   end
   if weatherstationcode_position[dbt] ~= 0 then
-    -- x.weatherstationcode_position_offset = (weatherstationcode_position[dbt] - 1) * 4
     x.weatherstationcode_position_offset = (weatherstationcode_position[dbt] - 2) * 4
     x.weatherstationcode_enabled = true
   end
   if weatherstationname_position[dbt] ~= 0 then
-    -- x.weatherstationname_position_offset = (weatherstationname_position[dbt] - 1) * 4
     x.weatherstationname_position_offset = (weatherstationname_position[dbt] - 2) * 4
     x.weatherstationname_enabled = true
   end
   if mcc_position[dbt] ~= 0 then
-    -- x.mcc_position_offset = (mcc_position[dbt] - 1) * 4
     x.mcc_position_offset = (mcc_position[dbt] - 2) * 4
     x.mcc_enabled = true
   end
   if mnc_position[dbt] ~= 0 then
-    -- x.mnc_position_offset = (mnc_position[dbt] - 1) * 4
     x.mnc_position_offset = (mnc_position[dbt] - 2) * 4
     x.mnc_enabled = true
   end
   if mobilebrand_position[dbt] ~= 0 then
-    -- x.mobilebrand_position_offset = (mobilebrand_position[dbt] - 1) * 4
     x.mobilebrand_position_offset = (mobilebrand_position[dbt] - 2) * 4
     x.mobilebrand_enabled = true
   end
   if elevation_position[dbt] ~= 0 then
-    -- x.elevation_position_offset = (elevation_position[dbt] - 1) * 4
     x.elevation_position_offset = (elevation_position[dbt] - 2) * 4
     x.elevation_enabled = true
   end
   if usagetype_position[dbt] ~= 0 then
-    -- x.usagetype_position_offset = (usagetype_position[dbt] - 1) * 4
     x.usagetype_position_offset = (usagetype_position[dbt] - 2) * 4
     x.usagetype_enabled = true
+  end
+  if addresstype_position[dbt] ~= 0 then
+    x.addresstype_position_offset = (addresstype_position[dbt] - 2) * 4
+    x.addresstype_enabled = true
+  end
+  if category_position[dbt] ~= 0 then
+    x.category_position_offset = (category_position[dbt] - 2) * 4
+    x.category_enabled = true
   end
 
   x.metaok = true
@@ -418,13 +411,6 @@ function ip2location:checkip(ip)
     return R.IPV4, ipnum, ipindex
   end
 
-  -- check for ipv6 format, should be 8 'chunks' of numbers/letters
-  -- without leading/trailing chars
-  -- or fewer than 8 chunks, but with only one `::` group
-  -- chunks = {ip:match("^"..(("([a-fA-F0-9]*):"):rep(8):gsub(":$","$")))}
-  --  if #chunks == 8
-  --  or #chunks < 8 and ip:match('::') and not ip:gsub("::","",1):match('::') then
-
   local isIPv6 = false;
   local hextets = 8;
 
@@ -467,31 +453,21 @@ function ip2location:checkip(ip)
     
     local override = 0
     
-    -- DEBUGGING
-    -- print("IPNUM BEFORE: " .. ipnum)
-    
     -- special cases which should convert to equivalent IPv4
     if ipnum >= from_v4mapped and ipnum <= to_v4mapped then -- ipv4-mapped ipv6
-      -- print("IPv4-mapped") -- DEBUGGING
       override = 1
       ipnum = ipnum - from_v4mapped
     elseif ipnum >= from_6to4 and ipnum <= to_6to4 then  -- 6to4
-      -- print("6to4") -- DEBUGGING
       override = 1
       ipnum = ipnum >> 80
       ipnum2 = ipnum:asnumber() & 0xffffffff
       ipnum = bn(ipnum2) -- convert back to bn
     elseif ipnum >= from_teredo and ipnum <= to_teredo then -- Teredo
-      -- print("Teredo") -- DEBUGGING
       override = 1
       ipnum = ~ipnum
       ipnum2 = ipnum:asnumber() & 0xffffffff
-      -- print("ipnum2: " .. ipnum2) -- DEBUGGING
       ipnum = bn(ipnum2) -- convert back to bn
     end
-    
-    -- DEBUGGING
-    -- print("IPNUM AFTER: " .. ipnum)
     
     local ipindex = 0;
     if override == 1 then
@@ -536,6 +512,8 @@ function ip2locationrecord:loadmessage(mesg)
   x.mnc = mesg
   x.mobilebrand = mesg
   x.usagetype = mesg
+  x.addresstype = mesg
+  x.category = mesg
   return x
 end
 
@@ -579,7 +557,6 @@ function ip2location:query(ipaddress, mode)
   local ipto = bn.ZERO
   local maxip = bn.ZERO
   local firstcol = 4
-  -- local row = ""
 
   -- printme(self)
 
@@ -621,110 +598,96 @@ function ip2location:query(ipaddress, mode)
     if (ipno >= ipfrom) and (ipno < ipto) then
       if iptype == 6 then
         firstcol = 16
-        -- rowoffset = rowoffset + 12 -- coz below is assuming all columns are 4 bytes, so got 12 left to go to make 16 bytes total
       end
 
       self.f:seek("set", rowoffset + firstcol - 1)
       local row = self.f:read(self.columnsize_without_ip)
 
       if (mode&modes.countryshort == 1) and (self.country_enabled == true) then
-        -- result.country_short = readstr(readuint32(rowoffset + self.country_position_offset, self.f):asnumber(), self.f)
         result.country_short = readstr(readuint32row(self.country_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.countrylong ~= 0) and (self.country_enabled == true) then
-        -- result.country_long = readstr(readuint32(rowoffset + self.country_position_offset, self.f):asnumber() + 3, self.f)
         result.country_long = readstr(readuint32row(self.country_position_offset, row):asnumber() + 3, self.f)
       end
 
       if (mode&modes.region ~= 0) and (self.region_enabled == true) then
-        -- result.region = readstr(readuint32(rowoffset + self.region_position_offset, self.f):asnumber(), self.f)
         result.region = readstr(readuint32row(self.region_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.city ~= 0) and (self.city_enabled == true) then
-        -- result.city = readstr(readuint32(rowoffset + self.city_position_offset, self.f):asnumber(), self.f)
         result.city = readstr(readuint32row(self.city_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.isp ~= 0) and (self.isp_enabled == true) then
-        -- result.isp = readstr(readuint32(rowoffset + self.isp_position_offset, self.f):asnumber(), self.f)
         result.isp = readstr(readuint32row(self.isp_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.latitude ~= 0) and (self.latitude_enabled == true) then
-        -- result.latitude = roundup(readfloat(rowoffset + self.latitude_position_offset, self.f), 6)
         result.latitude = roundup(readfloatrow(self.latitude_position_offset, row), 6)
       end
 
       if (mode&modes.longitude ~= 0) and (self.longitude_enabled == true) then
-        -- result.longitude = roundup(readfloat(rowoffset + self.longitude_position_offset, self.f), 6)
         result.longitude = roundup(readfloatrow(self.longitude_position_offset, row), 6)
       end
 
       if (mode&modes.domain ~= 0) and (self.domain_enabled == true) then
-        -- result.domain = readstr(readuint32(rowoffset + self.domain_position_offset, self.f):asnumber(), self.f)
         result.domain = readstr(readuint32row(self.domain_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.zipcode ~= 0) and (self.zipcode_enabled == true) then
-        -- result.zipcode = readstr(readuint32(rowoffset + self.zipcode_position_offset, self.f):asnumber(), self.f)
         result.zipcode = readstr(readuint32row(self.zipcode_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.timezone ~= 0) and (self.timezone_enabled == true) then
-        -- result.timezone = readstr(readuint32(rowoffset + self.timezone_position_offset, self.f):asnumber(), self.f)
         result.timezone = readstr(readuint32row(self.timezone_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.netspeed ~= 0) and (self.netspeed_enabled == true) then
-        -- result.netspeed = readstr(readuint32(rowoffset + self.netspeed_position_offset, self.f):asnumber(), self.f)
         result.netspeed = readstr(readuint32row(self.netspeed_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.iddcode ~= 0) and (self.iddcode_enabled == true) then
-        -- result.iddcode = readstr(readuint32(rowoffset + self.iddcode_position_offset, self.f):asnumber(), self.f)
         result.iddcode = readstr(readuint32row(self.iddcode_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.areacode ~= 0) and (self.areacode_enabled == true) then
-        -- result.areacode = readstr(readuint32(rowoffset + self.areacode_position_offset, self.f):asnumber(), self.f)
         result.areacode = readstr(readuint32row(self.areacode_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.weatherstationcode ~= 0) and (self.weatherstationcode_enabled == true) then
-        -- result.weatherstationcode = readstr(readuint32(rowoffset + self.weatherstationcode_position_offset, self.f):asnumber(), self.f)
         result.weatherstationcode = readstr(readuint32row(self.weatherstationcode_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.weatherstationname ~= 0) and (self.weatherstationname_enabled == true) then
-        -- result.weatherstationname = readstr(readuint32(rowoffset + self.weatherstationname_position_offset, self.f):asnumber(), self.f)
         result.weatherstationname = readstr(readuint32row(self.weatherstationname_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.mcc ~= 0) and (self.mcc_enabled == true) then
-        -- result.mcc = readstr(readuint32(rowoffset + self.mcc_position_offset, self.f):asnumber(), self.f)
         result.mcc = readstr(readuint32row(self.mcc_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.mnc ~= 0) and (self.mnc_enabled == true) then
-        -- result.mnc = readstr(readuint32(rowoffset + self.mnc_position_offset, self.f):asnumber(), self.f)
         result.mnc = readstr(readuint32row(self.mnc_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.mobilebrand ~= 0) and (self.mobilebrand_enabled == true) then
-        -- result.mobilebrand = readstr(readuint32(rowoffset + self.mobilebrand_position_offset, self.f):asnumber(), self.f)
         result.mobilebrand = readstr(readuint32row(self.mobilebrand_position_offset, row):asnumber(), self.f)
       end
 
       if (mode&modes.elevation ~= 0) and (self.elevation_enabled == true) then
-        -- result.elevation = tonumber(readstr(readuint32(rowoffset + self.elevation_position_offset, self.f):asnumber(), self.f))
         result.elevation = tonumber(readstr(readuint32row(self.elevation_position_offset, row):asnumber(), self.f))
       end
 
       if (mode&modes.usagetype ~= 0) and (self.usagetype_enabled == true) then
-        -- result.usagetype = readstr(readuint32(rowoffset + self.usagetype_position_offset, self.f):asnumber(), self.f)
         result.usagetype = readstr(readuint32row(self.usagetype_position_offset, row):asnumber(), self.f)
+      end
+      
+      if (mode&modes.addresstype ~= 0) and (self.addresstype_enabled == true) then
+        result.addresstype = readstr(readuint32row(self.addresstype_position_offset, row):asnumber(), self.f)
+      end
+      if (mode&modes.category ~= 0) and (self.category_enabled == true) then
+        result.category = readstr(readuint32row(self.category_position_offset, row):asnumber(), self.f)
       end
 
       -- printme(result)
@@ -849,6 +812,16 @@ end
 -- get usage type
 function ip2location:get_usagetype(ipaddress)
   return self:query(ipaddress, modes.usagetype)
+end
+
+-- get address type
+function ip2location:get_addresstype(ipaddress)
+  return self:query(ipaddress, modes.addresstype)
+end
+
+-- get category
+function ip2location:get_category(ipaddress)
+  return self:query(ipaddress, modes.category)
 end
 
 return ip2location

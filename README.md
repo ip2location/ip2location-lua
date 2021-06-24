@@ -1,7 +1,7 @@
 IP2Location Lua Package
 ======================
 
-This Lua package provides a fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, and usage type from IP address by using IP2Location database. This package uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, and usage type as values. It supports both IP address in IPv4 and IPv6.
+This Lua package provides a fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type and IAB category from IP address by using IP2Location database. This package uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type and IAB category as values. It supports both IP address in IPv4 and IPv6.
 
 This package can be used in many types of projects such as:
 
@@ -31,7 +31,7 @@ Example
 ```lua
 ip2location = require('ip2location')
 
-local ip2loc = ip2location:new('IP-COUNTRY-REGION-CITY-LATITUDE-LONGITUDE-ZIPCODE-TIMEZONE-ISP-DOMAIN-NETSPEED-AREACODE-WEATHER-MOBILE-ELEVATION-USAGETYPE.BIN')
+local ip2loc = ip2location:new('IP-COUNTRY-REGION-CITY-LATITUDE-LONGITUDE-ZIPCODE-TIMEZONE-ISP-DOMAIN-NETSPEED-AREACODE-WEATHER-MOBILE-ELEVATION-USAGETYPE-ADDRESSTYPE-CATEGORY.BIN')
 
 local result = ip2loc:get_all('8.8.8.8')
 
@@ -55,6 +55,8 @@ print("mnc: " .. result.mnc)
 print("mobilebrand: " .. result.mobilebrand)
 print("elevation: " .. result.elevation)
 print("usagetype: " .. result.usagetype)
+print("addresstype: " .. result.addresstype)
+print("category: " .. result.category)
 
 ip2loc:close()
 
@@ -76,4 +78,4 @@ Use the IPv6 BIN file if you need to query BOTH IPv4 and IPv6 addresses.
 Copyright
 =========
 
-Copyright (C) 2020 by IP2Location.com, support@ip2location.com
+Copyright (C) 2021 by IP2Location.com, support@ip2location.com
