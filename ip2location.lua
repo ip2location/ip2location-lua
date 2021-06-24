@@ -261,11 +261,11 @@ function ip2location:new(dbpath)
   x.productcode = readuint8(30, x.f)
   x.producttype = readuint8(31, x.f)
   x.filesize = readuint32(32, x.f):asnumber()
-  
-		-- check if is correct BIN (should be 1 for IP2Location BIN file), also checking for zipped file (PK being the first 2 chars)
-		if (x.productcode ~= 1 and x.databaseyear >= 21) or (x.databasetype == 80 and x.databasecolumn == 75) then -- only BINs from Jan 2021 onwards have this byte set
-      error(invalid_bin)
-		end
+
+  -- check if is correct BIN (should be 1 for IP2Location BIN file), also checking for zipped file (PK being the first 2 chars)
+  if (x.productcode ~= 1 and x.databaseyear >= 21) or (x.databasetype == 80 and x.databasecolumn == 75) then -- only BINs from Jan 2021 onwards have this byte set
+    error(invalid_bin)
+  end
 
   x.ipv4columnsize = x.databasecolumn * 4 -- 4 bytes each column
   x.ipv6columnsize = 16 + ((x.databasecolumn - 1) * 4) -- 4 bytes each column, except IPFrom column which is 16 bytes
@@ -438,9 +438,9 @@ function ip2location:checkip(ip)
   -- DEBUGGING CODE
   -- for key, value in pairs(chunks)
   -- do
-      -- print(key, " -- " , value);
+  -- print(key, " -- " , value);
   -- end
-  
+
   -- only support full IPv6 format for now
   if #chunks == 8 then
     local ipnum = bn.ZERO
@@ -450,9 +450,9 @@ function ip2location:checkip(ip)
       if #v > 0 and part > 65535 then return R.ERROR end
       ipnum = ipnum + (bn(part) << (16 * (8 - x)))
     end
-    
+
     local override = 0
-    
+
     -- special cases which should convert to equivalent IPv4
     if ipnum >= from_v4mapped and ipnum <= to_v4mapped then -- ipv4-mapped ipv6
       override = 1
@@ -468,7 +468,7 @@ function ip2location:checkip(ip)
       ipnum2 = ipnum:asnumber() & 0xffffffff
       ipnum = bn(ipnum2) -- convert back to bn
     end
-    
+
     local ipindex = 0;
     if override == 1 then
       if self.ipv4indexbaseaddr > 0 then
@@ -682,7 +682,7 @@ function ip2location:query(ipaddress, mode)
       if (mode&modes.usagetype ~= 0) and (self.usagetype_enabled == true) then
         result.usagetype = readstr(readuint32row(self.usagetype_position_offset, row):asnumber(), self.f)
       end
-      
+
       if (mode&modes.addresstype ~= 0) and (self.addresstype_enabled == true) then
         result.addresstype = readstr(readuint32row(self.addresstype_position_offset, row):asnumber(), self.f)
       end
