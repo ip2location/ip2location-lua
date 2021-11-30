@@ -121,7 +121,7 @@ local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21}
 local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22}
 
-local api_version = "8.4.0"
+local api_version = "8.5.0"
 
 local modes = {
   countryshort = 0x000001,
@@ -441,7 +441,6 @@ function ip2location:checkip(ip)
   -- print(key, " -- " , value);
   -- end
 
-  -- only support full IPv6 format for now
   if #chunks == 8 then
     local ipnum = bn.ZERO
     local part = 0

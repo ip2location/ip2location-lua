@@ -1,5 +1,5 @@
 package = "ip2location"
-version = "8.4.0-1"
+version = "8.5.0-1"
 source = {
    url = "git://github.com/ip2location/ip2location-lua.git"
 }
@@ -21,11 +21,15 @@ description = {
 }
 dependencies = {
    "lua >= 5.3",
-   "lua-nums"
+   "lua-nums",
+   "json-lua",
+   "luasocket",
+   "urlencode"
 }
 build = {
    type    = "builtin",
    modules = {
-      ["ip2location"] = "ip2location.lua"
+      ["ip2location"] = "ip2location.lua",
+      ["ip2locationwebservice"] = "ip2locationwebservice.lua"
    }
 }
