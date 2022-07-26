@@ -122,7 +122,7 @@ local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21}
 local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22}
 
-local api_version = "8.6.0"
+local api_version = "8.6.1"
 
 local modes = {
   countryshort = 0x000001,
@@ -654,8 +654,8 @@ function ip2location:query(ipaddress, mode)
     end
 
     if (ipno >= ipfrom) and (ipno < ipto) then
-      rowlen = colsize - firstcol
-      row = string.sub(fullrow, firstcol + 1, (firstcol + rowlen + 1)) -- extract the actual row data
+      readlen = colsize - firstcol
+      row = string.sub(fullrow, firstcol + 1, (firstcol + readlen + 1)) -- extract the actual row data
 
       if (mode&modes.countryshort == 1) and (self.country_enabled == true) then
         result.country_short = readstr(readuint32row(self.country_position_offset, row):asnumber(), self.f)
