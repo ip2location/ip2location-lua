@@ -41,6 +41,9 @@ ip2location = {
   usagetype_position_offset = 0,
   addresstype_position_offset = 0,
   category_position_offset = 0,
+  district_position_offset = 0,
+  asn_position_offset = 0,
+  as_position_offset = 0,
   country_enabled = false,
   region_enabled = false,
   city_enabled = false,
@@ -61,7 +64,10 @@ ip2location = {
   elevation_enabled = false,
   usagetype_enabled = false,
   addresstype_enabled = false,
-  category_enabled = false
+  category_enabled = false,
+  district_enabled = false,
+  asn_enabled = false,
+  as_enabled = false
 }
 ip2location.__index = ip2location
 
@@ -87,7 +93,10 @@ ip2locationrecord = {
   elevation = 0,
   usagetype = '',
   addresstype = '',
-  category = ''
+  category = '',
+  district = '',
+  asn = '',
+  as = ''
 }
 ip2locationrecord.__index = ip2locationrecord
 
@@ -100,56 +109,62 @@ local to_6to4 = bn("42550872755692912415807417417958686719")
 local from_teredo = bn("42540488161975842760550356425300246528")
 local to_teredo = bn("42540488241204005274814694018844196863")
 
-local country_position = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
-local region_position = {0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
-local city_position = {0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
-local isp_position = {0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9, 0, 9, 0, 9, 0, 9, 7, 9, 0, 9, 7, 9, 9}
-local latitude_position = {0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}
-local longitude_position = {0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
-local domain_position = {0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10,0, 10, 0, 10, 0, 10, 8, 10, 0, 10, 8, 10, 10}
-local zipcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 7, 7, 7, 0, 7, 0, 7, 7, 7, 0, 7, 7}
-local timezone_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 7, 8, 8, 8, 7, 8, 0, 8, 8, 8, 0, 8, 8}
-local netspeed_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 11,0, 11,8, 11, 0, 11, 0, 11, 0, 11, 11}
-local iddcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 12, 0, 12, 0, 12, 9, 12, 0, 12, 12}
-local areacode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10 ,13 ,0, 13, 0, 13, 10, 13, 0, 13, 13}
-local weatherstationcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 14, 0, 14, 0, 14, 0, 14, 14}
-local weatherstationname_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 15, 0, 15, 0, 15, 0, 15, 15}
-local mcc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 16, 0, 16, 9, 16, 16}
-local mnc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10,17, 0, 17, 10, 17, 17}
-local mobilebrand_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,18, 0, 18, 11, 18, 18}
-local elevation_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19, 19}
-local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20, 20}
-local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21}
-local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22}
+local country_position = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}
+local region_position = {0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
+local city_position = {0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4}
+local isp_position = {0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9, 0, 9, 0, 9, 0, 9, 7, 9, 0, 9, 7, 9, 9, 9}
+local latitude_position = {0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}
+local longitude_position = {0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}
+local domain_position = {0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10,0, 10, 0, 10, 0, 10, 8, 10, 0, 10, 8, 10, 10, 10}
+local zipcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 0, 7, 7, 7, 0, 7, 0, 7, 7, 7, 0, 7, 7, 7}
+local timezone_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 7, 8, 8, 8, 7, 8, 0, 8, 8, 8, 0, 8, 8, 8}
+local netspeed_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 11,0, 11,8, 11, 0, 11, 0, 11, 0, 11, 11, 11}
+local iddcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 12, 0, 12, 0, 12, 9, 12, 0, 12, 12, 12}
+local areacode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10 ,13 ,0, 13, 0, 13, 10, 13, 0, 13, 13, 13}
+local weatherstationcode_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 14, 0, 14, 0, 14, 0, 14, 14, 14}
+local weatherstationname_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 15, 0, 15, 0, 15, 0, 15, 15, 15}
+local mcc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 16, 0, 16, 9, 16, 16, 16}
+local mnc_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10,17, 0, 17, 10, 17, 17, 17}
+local mobilebrand_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11,18, 0, 18, 11, 18, 18, 18}
+local elevation_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19, 19, 19}
+local usagetype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20, 20, 20}
+local addresstype_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 21}
+local category_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22, 22}
+local district_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23}
+local asn_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24}
+local as_position = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25}
 
-local api_version = "8.6.1"
+local api_version = "8.7.0"
 
 local modes = {
-  countryshort = 0x000001,
-  countrylong = 0x000002,
-  region = 0x000004,
-  city = 0x000008,
-  isp = 0x000010,
-  latitude = 0x000020,
-  longitude = 0x000040,
-  domain = 0x000080,
-  zipcode = 0x000100,
-  timezone = 0x000200,
-  netspeed = 0x000400,
-  iddcode = 0x000800,
-  areacode = 0x001000,
-  weatherstationcode = 0x002000,
-  weatherstationname = 0x004000,
-  mcc = 0x008000,
-  mnc = 0x010000,
-  mobilebrand = 0x020000,
-  elevation = 0x040000,
-  usagetype = 0x080000,
-  addresstype = 0x100000,
-  category = 0x200000
+  countryshort = 0x0000001,
+  countrylong = 0x0000002,
+  region = 0x0000004,
+  city = 0x0000008,
+  isp = 0x0000010,
+  latitude = 0x0000020,
+  longitude = 0x0000040,
+  domain = 0x0000080,
+  zipcode = 0x0000100,
+  timezone = 0x0000200,
+  netspeed = 0x0000400,
+  iddcode = 0x0000800,
+  areacode = 0x0001000,
+  weatherstationcode = 0x0002000,
+  weatherstationname = 0x0004000,
+  mcc = 0x0008000,
+  mnc = 0x0010000,
+  mobilebrand = 0x0020000,
+  elevation = 0x0040000,
+  usagetype = 0x0080000,
+  addresstype = 0x0100000,
+  category = 0x0200000,
+  district = 0x0400000,
+  asn = 0x0800000,
+  as = 0x1000000
 }
 
-modes.all = modes.countryshort | modes.countrylong | modes.region | modes.city | modes.isp | modes.latitude | modes.longitude | modes.domain | modes.zipcode | modes.timezone | modes.netspeed | modes.iddcode | modes.areacode | modes.weatherstationcode | modes.weatherstationname | modes.mcc | modes.mnc | modes.mobilebrand | modes.elevation | modes.usagetype | modes.addresstype | modes.category
+modes.all = modes.countryshort | modes.countrylong | modes.region | modes.city | modes.isp | modes.latitude | modes.longitude | modes.domain | modes.zipcode | modes.timezone | modes.netspeed | modes.iddcode | modes.areacode | modes.weatherstationcode | modes.weatherstationname | modes.mcc | modes.mnc | modes.mobilebrand | modes.elevation | modes.usagetype | modes.addresstype | modes.category | modes.district | modes.asn | modes.as
 
 local invalid_address = "Invalid IP address."
 local missing_file = "Invalid database file."
@@ -409,6 +424,18 @@ function ip2location:new(dbpath)
     x.category_position_offset = (category_position[dbt] - 2) * 4
     x.category_enabled = true
   end
+  if district_position[dbt] ~= 0 then
+    x.district_position_offset = (district_position[dbt] - 2) * 4
+    x.district_enabled = true
+  end
+  if asn_position[dbt] ~= 0 then
+    x.asn_position_offset = (asn_position[dbt] - 2) * 4
+    x.asn_enabled = true
+  end
+  if as_position[dbt] ~= 0 then
+    x.as_position_offset = (as_position[dbt] - 2) * 4
+    x.as_enabled = true
+  end
 
   x.metaok = true
   -- printme(x)
@@ -564,6 +591,9 @@ function ip2locationrecord:loadmessage(mesg)
   x.usagetype = mesg
   x.addresstype = mesg
   x.category = mesg
+  x.district = mesg
+  x.asn = mesg
+  x.as = mesg
   return x
 end
 
@@ -740,10 +770,22 @@ function ip2location:query(ipaddress, mode)
       if (mode&modes.addresstype ~= 0) and (self.addresstype_enabled == true) then
         result.addresstype = readstr(readuint32row(self.addresstype_position_offset, row):asnumber(), self.f)
       end
+
       if (mode&modes.category ~= 0) and (self.category_enabled == true) then
         result.category = readstr(readuint32row(self.category_position_offset, row):asnumber(), self.f)
       end
 
+      if (mode&modes.district ~= 0) and (self.district_enabled == true) then
+        result.district = readstr(readuint32row(self.district_position_offset, row):asnumber(), self.f)
+      end
+
+      if (mode&modes.asn ~= 0) and (self.asn_enabled == true) then
+        result.asn = readstr(readuint32row(self.asn_position_offset, row):asnumber(), self.f)
+      end
+
+      if (mode&modes.as ~= 0) and (self.as_enabled == true) then
+        result.as = readstr(readuint32row(self.as_position_offset, row):asnumber(), self.f)
+      end
       -- printme(result)
 
       -- Lua style where you must have "return" as the last statement in a block
@@ -876,6 +918,21 @@ end
 -- get category
 function ip2location:get_category(ipaddress)
   return self:query(ipaddress, modes.category)
+end
+
+-- get district
+function ip2location:get_district(ipaddress)
+  return self:query(ipaddress, modes.district)
+end
+
+-- get autonomous system number (ASN)
+function ip2location:get_asn(ipaddress)
+  return self:query(ipaddress, modes.asn)
+end
+
+-- get autonomous system (AS)
+function ip2location:get_as(ipaddress)
+  return self:query(ipaddress, modes.as)
 end
 
 return ip2location
