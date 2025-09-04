@@ -55,6 +55,9 @@ print("category: " .. result.category)
 print("district: " .. result.district)
 print("asn: " .. result.asn)
 print("as: " .. result.as)
+print("asdomain: " .. result.asdomain)
+print("asusagetype: " .. result.asusagetype)
+print("ascidr: " .. result.ascidr)
 
 ip2loc:close()
 ```

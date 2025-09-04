@@ -44,6 +44,9 @@ ip2location = {
   district_position_offset = 0,
   asn_position_offset = 0,
   as_position_offset = 0,
+  asdomain_position_offset = 0,
+  asusagetype_position_offset = 0,
+  ascidr_position_offset = 0,
   country_enabled = false,
   region_enabled = false,
   city_enabled = false,
@@ -68,6 +71,9 @@ ip2location = {
   district_enabled = false,
   asn_enabled = false,
   as_enabled = false,
+  asdomain_enabled = false,
+  asusagetype_enabled = false,
+  ascidr_enabled = false,
 }
 ip2location.__index = ip2location
 
@@ -97,6 +103,9 @@ ip2locationrecord = {
   district = "",
   asn = "",
   as = "",
+  asdomain = "",
+  asusagetype = "",
+  ascidr = "",
 }
 ip2locationrecord.__index = ip2locationrecord
 
@@ -135,8 +144,11 @@ local category_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 local district_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23 }
 local asn_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24 }
 local as_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25 }
+local asdomain_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 26 }
+local asusagetype_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27 }
+local ascidr_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28 }
 
-local api_version = "8.7.1"
+local api_version = "8.8.0"
 
 local modes = {
   countryshort = 0x0000001,
@@ -164,6 +176,9 @@ local modes = {
   district = 0x0400000,
   asn = 0x0800000,
   as = 0x1000000,
+  asdomain = 0x2000000,
+  asusagetype = 0x4000000,
+  ascidr = 0x8000000,
 }
 
 modes.all = modes.countryshort
@@ -191,6 +206,9 @@ modes.all = modes.countryshort
 | modes.district
 | modes.asn
 | modes.as
+| modes.asdomain
+| modes.asusagetype
+| modes.ascidr
 
 local invalid_address = "Invalid IP address."
 local missing_file = "Invalid database file."
@@ -467,6 +485,18 @@ function ip2location:new(dbpath)
     x.as_position_offset = (as_position[dbt] - 2) * 4
     x.as_enabled = true
   end
+  if asdomain_position[dbt] ~= 0 then
+    x.asdomain_position_offset = (asdomain_position[dbt] - 2) * 4
+    x.asdomain_enabled = true
+  end
+  if asusagetype_position[dbt] ~= 0 then
+    x.asusagetype_position_offset = (asusagetype_position[dbt] - 2) * 4
+    x.asusagetype_enabled = true
+  end
+  if ascidr_position[dbt] ~= 0 then
+    x.ascidr_position_offset = (ascidr_position[dbt] - 2) * 4
+    x.ascidr_enabled = true
+  end
 
   x.metaok = true
   -- printme(x)
@@ -476,7 +506,9 @@ end
 -- close file and reset
 function ip2location:close()
   self.metaok = false
-  io.close(self.f)
+  if self.f ~= nil then
+    io.close(self.f)
+  end
 end
 
 -- get IP type and calculate IP number; calculates index too if exists
@@ -639,6 +671,9 @@ function ip2locationrecord:loadmessage(mesg)
   x.district = mesg
   x.asn = mesg
   x.as = mesg
+  x.asdomain = mesg
+  x.asusagetype = mesg
+  x.ascidr = mesg
   return x
 end
 
@@ -839,6 +874,18 @@ function ip2location:query(ipaddress, mode)
       if (mode & modes.as ~= 0) and (self.as_enabled == true) then
         result.as = readstr(readuint32row(self.as_position_offset, row):asnumber(), self.f)
       end
+
+      if (mode & modes.asdomain ~= 0) and (self.asdomain_enabled == true) then
+        result.asdomain = readstr(readuint32row(self.asdomain_position_offset, row):asnumber(), self.f)
+      end
+
+      if (mode & modes.asusagetype ~= 0) and (self.asusagetype_enabled == true) then
+        result.asusagetype = readstr(readuint32row(self.asusagetype_position_offset, row):asnumber(), self.f)
+      end
+
+      if (mode & modes.ascidr ~= 0) and (self.ascidr_enabled == true) then
+        result.ascidr = readstr(readuint32row(self.ascidr_position_offset, row):asnumber(), self.f)
+      end
       -- printme(result)
 
       -- Lua style where you must have "return" as the last statement in a block
@@ -986,6 +1033,21 @@ end
 -- get autonomous system (AS)
 function ip2location:get_as(ipaddress)
   return self:query(ipaddress, modes.as)
+end
+
+-- get AS domain
+function ip2location:get_asdomain(ipaddress)
+  return self:query(ipaddress, modes.asdomain)
+end
+
+-- get AS usage type
+function ip2location:get_asusagetype(ipaddress)
+  return self:query(ipaddress, modes.asusagetype)
+end
+
+-- get AS CIDR
+function ip2location:get_ascidr(ipaddress)
+  return self:query(ipaddress, modes.ascidr)
 end
 
 return ip2location

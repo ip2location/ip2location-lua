@@ -1,7 +1,7 @@
 # IP2Location Lua Package
 [![LuaRocks](https://img.shields.io/luarocks/v/ip2location/ip2location)](https://luarocks.org/modules/ip2location/ip2location)
 
-This Lua package provides a fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type, IAB category, district, autonomous system number (ASN) and autonomous system (AS) from IP address by using IP2Location database. This package uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type, IAB category, district, autonomous system number (ASN) and autonomous system (AS) as values. It supports both IP address in IPv4 and IPv6.
+This Lua package provides a fast lookup of country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type, IAB category, district, autonomous system number (ASN) and autonomous system (AS) from IP address by using IP2Location database. This package uses a file based database available at IP2Location.com. This database simply contains IP blocks as keys, and other information such as country, region, city, latitude, longitude, ZIP code, time zone, ISP, domain name, connection type, IDD code, area code, weather station code, station name, mcc, mnc, mobile brand, elevation, usage type, address type, IAB category, district, autonomous system number (ASN), autonomous system (AS), AS domain, AS usage type and AS CIDR as values. It supports both IP address in IPv4 and IPv6.
 
 This package can be used in many types of projects such as:
 
@@ -17,9 +17,6 @@ The database will be updated in monthly basis for the greater accuracy. Free LIT
 
 The paid databases are available at https://www.ip2location.com under Premium subscription package.
 
-As an alternative, this library can also call the IP2Location Web Service. This requires an API key. If you don't have an existing API key, you can subscribe for one at the below:
-
-https://www.ip2location.com/web-service/ip2location
 
 ## Developer Documentation
 To learn more about installation, usage, and code examples, please visit the developer documentation at [https://ip2location-lua.readthedocs.io/en/latest/index.html.](https://ip2location-lua.readthedocs.io/en/latest/index.html)
