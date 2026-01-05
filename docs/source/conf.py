@@ -6,11 +6,11 @@
 # -- Project information
 
 project = 'IP2Location Lua'
-copyright = '2025, IP2Location'
+copyright = '2026, IP2Location'
 author = 'IP2Location'
 
-release = '8.8.0'
-version = '8.8.0'
+release = '8.8.1'
+version = '8.8.1'
 
 # -- General configuration
 

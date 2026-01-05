@@ -148,7 +148,7 @@ local asdomain_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 local asusagetype_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 27 }
 local ascidr_position = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28 }
 
-local api_version = "8.8.0"
+local api_version = "8.8.1"
 
 local modes = {
   countryshort = 0x0000001,
@@ -618,9 +618,8 @@ function ip2location:checkip(ip)
       ipnum = bn(ipnum2) -- convert back to bn
     elseif ipnum >= from_teredo and ipnum <= to_teredo then -- Teredo
       override = 1
-      ipnum = ~ipnum
-      ipnum2 = ipnum:asnumber() & 0xffffffff
-      ipnum = bn(ipnum2) -- convert back to bn
+      -- invert lower 32 bits only (bypass the bnot from the bn coz of weird error)
+      ipnum = bn(0xffffffff) - (ipnum & bn(0xffffffff))
     end
 
     local ipindex = 0
