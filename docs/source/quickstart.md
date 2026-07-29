@@ -14,6 +14,7 @@ download the BIN database at
 To install this library:
 
 ```
+luarocks install --server=https://luarocks.org/dev lua-nums
 luarocks install ip2location
 ```
 
